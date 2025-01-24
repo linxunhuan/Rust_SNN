@@ -1,4 +1,4 @@
-/* * SNN Neuron models * */
+/* * SNN 神经元模型 * */
 
 pub mod lif;
-/* (only LIF model supported at the moment) */
+/*（目前仅支持 LIF 模型） */

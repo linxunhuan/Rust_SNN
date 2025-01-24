@@ -1,21 +1,21 @@
 use crate::snn::neuron::Neuron;
 
-/* * LIF submodule * */
+/* * LIF子模块 * */
 
 /**
-Object representing a Neuron in the LIF (Leaky Integrate-and-Fire) model
+表示 LIF 模型中的神经元的对象
  */
 #[derive(Debug)]
 pub struct LifNeuron {
     /* const fields */
-    v_th:    f64,       /* threshold potential */
-    v_rest:  f64,       /* resting potential */
-    v_reset: f64,       /* reset potential */
-    tau:     f64,
-    dt:      f64,       /* time interval between two consecutive instants */
+    v_th:    f64,       /* 阈值电位，神经元达到这个电位时会触发发放（尖峰） */
+    v_rest:  f64,       /* 静息电位，神经元在没有受到任何输入时的电位 */
+    v_reset: f64,       /* 复位电位，神经元在发放后会重置到这个电位 */
+    tau:     f64,       /* 时间常数，描述了神经元膜电位的变化速度 */
+    dt:      f64,       /* 两个连续时刻之间的时间间隔，用于数值模拟时的步长 */
     /* mutable fields */
-    v_mem:   f64,       /* membrane potential */
-    ts:      u64,       /* last instant in which has been received at least one spike */
+    v_mem:   f64,       /* 膜电位，当前时刻神经元的电位 */
+    ts:      u64,       /* 最后一个瞬间，至少接收到一个尖峰的时间戳 */
 }
 
 impl LifNeuron {
@@ -27,11 +27,11 @@ impl LifNeuron {
             tau,
             dt,
             v_mem: v_rest,
-            ts: 0u64,
+            ts: 0u64,       // 初始化 ts 字段为 0
         }
     }
 
-    /* Getters of the neuron object parameters */
+    /* 神经元对象参数的获取器 */
     pub fn get_v_th(&self) -> f64 {
         self.v_th
     }
@@ -62,26 +62,25 @@ impl LifNeuron {
 
 impl Neuron for LifNeuron {
     /*
-        This function updates the membrane potential of the neuron when it receives at least one spike
+        当神经元接收到至少一个 spike 时，这个函数会更新神经元的膜电位
     */
     fn compute_v_mem(&mut self, t: u64, extra_weighted_sum: f64, intra_weighted_sum: f64) -> u8 {
-        let weighted_sum = extra_weighted_sum +    /* positive contribute */
-            intra_weighted_sum      /* negative contribute */;
+        let weighted_sum = extra_weighted_sum +    /* 正贡献 */
+            intra_weighted_sum;      /* 负贡献 */
 
-        /* compute the neuron membrane potential with the LIF formula */
-
+        /* 使用 LIF 公式计算神经元膜电位 */
         let exponent = -(((t - self.ts) as f64) * self.dt / self.tau);
         self.v_mem = self.v_rest + (self.v_mem - self.v_rest) * exponent.exp() + weighted_sum;
 
-        /* update ts - last instant in which at least one positive spike (1) is received */
+        /* 更新 ts - 最后一个瞬间至少接收到一个正 spike */
         self.ts = t;
 
         return if self.v_mem > self.v_th {
-            /* reset membrane potential */
+            /* 重置膜电位 */
             self.v_mem = self.v_reset;
-            1   /* fire */
+            1   /* 发放 spike */
         } else {
-            0   /* not fire */
+            0   /* 不发放 spike */
         };
     }
 
@@ -91,8 +90,9 @@ impl Neuron for LifNeuron {
     }
 }
 
+
 /*
-    Traits implementation for the LifNeuron object
+    为 LifNeuron 对象实现特征
 */
 impl Clone for LifNeuron {
     fn clone(&self) -> Self {
@@ -109,3 +109,4 @@ impl Clone for LifNeuron {
 }
 
 unsafe impl Send for LifNeuron {}
+

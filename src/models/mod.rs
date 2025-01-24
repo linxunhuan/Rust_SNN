@@ -1,4 +1,4 @@
-/* * SNN models * */
+/* * SNN模型 * */
 
 pub mod neuron;
-/* (in our case only the Neuron can have different models) */
+/* （在我的例子中，只有神经元可以有不同的模型） */
