@@ -1,25 +1,20 @@
-# Spiking Neural Network library
-- [Description](#description)
-- [Group Members](#group-members)
-- [Dependencies](#dependencies)
-- [Repos Structure](#repos-structure)
-- [Organization](#organization)
-- [Main Structures](#main-structures)
-- [Main Methods](#main-methods)
-- [Usage Examples](#usage-examples)
+# 脉冲神经网络库
+- [脉冲神经网络库](#脉冲神经网络库)
+  - [描述](#描述)
+  - [依赖](#依赖)
+  - [Repos Structure](#repos-structure)
+  - [Organization](#organization)
+  - [Main structures](#main-structures)
+  - [Main methods](#main-methods)
+  - [Usage examples](#usage-examples)
 
-## Description
+## 描述
 This is a `Rust library` aiming to model a `Spiking Neural Network`. It is carried out for the `group project` related to the "Programmazione di Sistema" course of the Politecnico di Torino, a.y. 2021-2022.
 
 The library provide support for the implementation of `Spiking Neural Network` models to be executed over spikes datasets.
 It does *not* support the training phase of the network, but only the execution one.
 
-## Group members
-- Francesco Rosati
-- Giuseppe Lazzara
-- Mario Mastrandrea
-
-## Dependencies
+## 依赖
 - `Rust` (version 1.56.1)
 - `Cargo` (version 1.56.0)
 
