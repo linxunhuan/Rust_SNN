@@ -2,194 +2,186 @@
 - [脉冲神经网络库](#脉冲神经网络库)
   - [描述](#描述)
   - [依赖](#依赖)
-  - [Repos Structure](#repos-structure)
-  - [Organization](#organization)
-  - [Main structures](#main-structures)
-  - [Main methods](#main-methods)
-  - [Usage examples](#usage-examples)
+  - [仓库结构](#仓库结构)
+  - [组织](#组织)
+  - [主要结构](#主要结构)
+  - [主要方法](#主要方法)
+  - [使用示例](#使用示例)
 
 ## 描述
-This is a `Rust library` aiming to model a `Spiking Neural Network`. It is carried out for the `group project` related to the "Programmazione di Sistema" course of the Politecnico di Torino, a.y. 2021-2022.
+这是一个用 Rust 编写的库，旨在建模 脉冲神经网络
 
-The library provide support for the implementation of `Spiking Neural Network` models to be executed over spikes datasets.
-It does *not* support the training phase of the network, but only the execution one.
+该库支持在脉冲数据集上执行 脉冲神经网络 模型的实现。它不支持网络的训练阶段，仅支持执行阶段。
 
 ## 依赖
 - `Rust` (version 1.56.1)
 - `Cargo` (version 1.56.0)
 
-No other particular dependencies are required.
+## 仓库结构
+仓库的结构如下：
+- `src/` 包含库的源代码
+  + `bin/`    包含演示脚本
+  + `models/` 包含具体模型的实现（此处仅为 Lif Neuron）
+  + `snn/`    包含 SNN 的通用实现
+    + `builders` 包含 SNN 的构建器对象
+- `tests/` 包含库的测试
 
-## Repos Structure
-The repository is structured as follows:
-- `src/` contains the **source code** of the library
-  + `bin/`    contains the demo scripts
-  + `models/` contains the specific models' implementations (here only `Lif Neuron`)
-  + `snn/`    contains the SNN generic implementation
-    + `builders` contains the builder objects for the SNN
-- `tests/` contains the tests of the library
+## 组织
+该库的组织结构如下：
 
-## Organization
-The library is organized as follows:
-
-- ### Builder
-  The `Builder` module allows you to actually create the structure of
-  the network with the corresponding layers, neurons per each layer,
-  the corresponding weights between them and between neurons of the same layer.
-  The library provides two `Builder` implementations:
+- ### 构建器
+  Builder 模块允许你实际创建网络结构，包括相应的层、每层的神经元、它们之间的权重以及同一层神经元之间的权重
+  该库提供了两种 Builder 实现：
   - #### SnnBuilder 
 
-    The `SnnBuilder` allows to *statically* create a `Spiking Neural Network` taking for each layer static vectors of neurons,
-    weights and intra-layer weights. The library can check the correctness of the network structure at *compile-time*, but this implies that all
-    the structures of the network are allocated on the **Stack** (**Not fitting with large networks**).
+    SnnBuilder 允许静态创建 脉冲神经网络，为每一层提供静态的神经元向量、权重和层内权重
+    该库可以在编译时检查网络结构的正确性，但这意味着网络的所有结构都分配在**栈（Stack）**上（不适合大型网络）
 
   - #### DynSnnBuilder 
-    The `DynSnnBuilder` allows to *dynamically* create a `Spiking Neural Network` taking for each layer dynamic vectors of neurons,
-    weights and intra-layer weights. The library cannot check the correctness of the network structure until the *execution time*, but this implies that all
-    the structures of the network are allocated on the **Heap** (**Fitting with large networks**).
+   DynSnnBuilder 允许动态创建 脉冲神经网络，为每一层提供动态的神经元向量、权重和层内权重
+   该库只能在运行时检查网络结构的正确性，但这意味着网络的所有结构都分配在**堆（Heap）**上（适合大型网络）
 
 - ### Network
-  The `Network` module allows you to actually execute the network on a given input.
-  The library provides two `Network` implementations:
-  - #### Snn (Spiking Neural Network)
+  Network 模块允许你在给定输入上实际执行网络
+  该库提供了两种 Network 实现：
+  - #### Snn 
 
-    The `Snn` is created by the `SnnBuilder` and allows to execute the network on a given input through the `process()` method.
-    As the `SnnBuilder`, the `Snn` receives the input as a static vector of spikes and produces as output a static vector of spikes too.
-    The correctness of the input can be checked at *compile time*.
+    Snn 由 SnnBuilder 创建，并允许通过 process() 方法在给定输入上执行网络
+    与 SnnBuilder 一样，Snn 接收静态的脉冲向量作为输入，并同样产生静态的脉冲向量作为输出
 
-  - #### DynSnn (Dynamic Spiking Neural Network)
+  - #### DynSnn
 
-    The `DynSnn` is created by the `DynSnnBuilder` and allows to execute the network on a given input through the `process()` method.
-    As the `DynSnnBuilder`, the `DynSnn` receives the input as a dynamic vector of spikes and produces as output a dynamic vector of spikes too.
-    The correctness of the input can be checked only at *run time*.
+    DynSnn 由 DynSnnBuilder 创建，并允许通过 process() 方法在给定输入上执行网络
+    与 DynSnnBuilder 一样，DynSnn 接收动态的脉冲向量作为输入，并同样产生动态的脉冲向量作为输出
+    输入的正确性只能在运行时检查
 
-## Main structures
-The library provides the following main structures:
+## 主要结构
+该库提供了以下主要结构：
 
-- `LifNeuron` represents a neuron for the `Leaky Integrate and Fire` model, it can be used to build a `Layer` of neurons. 
+- LifNeuron 表示 泄漏积分-发放 模型的神经元，可用于构建神经元 Layer
 
 ```rust
 pub struct LifNeuron {
-    /* const fields */
-    v_th:    f64,       /* threshold potential */
-    v_rest:  f64,       /* resting potential */
-    v_reset: f64,       /* reset potential */
+    /* 常量字段 */
+    v_th:    f64,       /* 阈值电位 */
+    v_rest:  f64,       /* 静息电位 */
+    v_reset: f64,       /* 重置电位 */
     tau:     f64, 
-    dt:      f64,       /* time interval between two consecutive instants */
-    /* mutable fields */
-    v_mem:   f64,       /* membrane potential */
-    ts:      u64,       /* last instant in which receiving at least one spike */
+    dt:      f64,       /* 两个连续时刻之间的时间间隔 */
+    
+    /* 可变字段 */
+    v_mem:   f64,       /* 膜电位 */
+    ts:      u64,       /* 上次接收到至少一个脉冲的时刻 */
 }
 ```
-For more information about the `Leaky Integrate and Fire` model, see [here](https://www.nature.com/articles/s41598-017-07418-y).
+有关 泄漏积分-发放 模型的更多信息，请参见 [此处](https://www.nature.com/articles/s41598-017-07418-y).
 
-- `Layer` represents a layer of neurons, it can be used to build a `SNN` or `DynSNN`  of layers.
+- `Layer` 表示一层神经元，可用于构建由多层组成的 SNN 或 DynSNN
 ```rust
 pub struct Layer<N: Neuron + Clone + Send + 'static> {
-    neurons: Vec<N>,                /* neurons of the layer */
-    weights: Vec<Vec<f64>>,         /* weights between the neurons of this layer and the previous one */
-    intra_weights: Vec<Vec<f64>>,   /* weights between the neurons of this layer */
-    prev_output_spikes: Vec<u8>     /* output spikes of the previous instant */
+    neurons: Vec<N>,                /* 该层的神经元 */
+    weights: Vec<Vec<f64>>,         /* 该层与前一层神经元之间的权重 */
+    intra_weights: Vec<Vec<f64>>,   /* 该层内部神经元之间的权重 */
+    prev_output_spikes: Vec<u8>     /* 前一时刻的输出脉冲 */
 }
 ```
 
-- `SpikeEvent` represents an event of a neurons layer firing at a certain instant of time. 
-It wraps the spikes flowing through the network
+- `SpikeEvent` 表示某时刻神经元层发放的事件。它封装了网络中流动的脉冲
 ```rust
 pub struct SpikeEvent {
-    ts: u64,            /* discrete time instant */
-    spikes: Vec<u8>,    /* vector of spikes in that instant (a 1/0 for each input neuron)  */
+    ts: u64,            /* 离散时间点 */
+    spikes: Vec<u8>,    /* 该时刻的脉冲向量（每个输入神经元为 1/0） */
 }
 ```
 
-- `SNN` represents a `Spiking Neural Network` composed by a vector of `Layer`s.
+- `SNN` 表示由多个 `Layer` 向量组成的 `脉冲神经网络`.
 ```rust
 pub struct SNN<N: Neuron + Clone + Send + 'static, const NET_INPUT_DIM: usize, const NET_OUTPUT_DIM: usize> {
     layers: Vec<Arc<Mutex<Layer<N>>>>
 }
 ```
 
-- `DynSNN` represents a `Dynamic Spiking Neural Network` composed by a vector of `Layer`s.
+- `DynSNN` 表示由多个 `Layer` 向量组成的 `动态脉冲神经网络`.
 ```rust
 pub struct DynSNN <N: Neuron + Clone + 'static>{
     layers: Vec<Arc<Mutex<Layer<N>>>>
 }
 ```
 
-- `Processor` is the object in charge of managing the layers' threads and processing the input spikes events
+- `Processor` 是负责管理层线程并处理输入脉冲事件的对象
 ```rust
 pub struct Processor { }
 ```
 
-- `SnnBuilder` represents the builder for a `SNN`
+- `SnnBuilder` 表示 `SNN` 的构建器
 ```rust
 pub struct SnnBuilder<N: Neuron + Clone + Send + 'static> {
     params: SnnParams<N>
 }
 
 pub struct SnnParams<N: Neuron + Clone + Send + 'static> {
-    pub neurons: Vec<Vec<N>>,               /* neurons per each layer */
-    pub extra_weights: Vec<Vec<Vec<f64>>>,  /* (positive) weights between layers */
-    pub intra_weights: Vec<Vec<Vec<f64>>>,  /* (negative) weights inside the same layer */
+    pub neurons: Vec<Vec<N>>,               /* 每个层的神经元 */
+    pub extra_weights: Vec<Vec<Vec<f64>>>,  /* 层之间的（正）权重 */
+    pub intra_weights: Vec<Vec<Vec<f64>>>,  /* 同一层内的（负）权重 */
 }
 ```
 
--  `DynSnnBuilder` represents the builder for a `DynSNN`
+-  `DynSnnBuilder` 表示 `DynSNN` 的构建器
 ```rust
 pub struct DynSnnBuilder<N: Neuron> {
     params: DynSnnParams<N>
 }
 
 pub struct DynSnnParams<N: Neuron> {
-    pub input_dimensions: usize,            /* dimension of the network input layer */
-    pub neurons: Vec<Vec<N>>,               /* neurons per each layer */
-    pub extra_weights: Vec<Vec<Vec<f64>>>,  /* (positive) weights between layers */
-    pub intra_weights: Vec<Vec<Vec<f64>>>,  /* (negative) weights inside the same layer */
-    pub num_layers: usize,                  /* number of layers */
+    pub input_dimensions: usize,            /* 网络输入层的维度 */
+    pub neurons: Vec<Vec<N>>,               /* 每个层的神经元 */
+    pub extra_weights: Vec<Vec<Vec<f64>>>,  /* 层之间的（正）权重 */
+    pub intra_weights: Vec<Vec<Vec<f64>>>,  /* 同一层内的（负）权重 */
+    pub num_layers: usize,                  /* 层数 */
 }
 ```
 
-## Main methods
-The library provides the following main methods:
- - ### Builder Methods
-   - #### `SnnBuilder` methods:
+## 主要方法
+该库提供了以下主要方法：
+ - ### 构建器方法
+   - #### `SnnBuilder` 方法:
    
-     - **new()** method: 
+     - **new()** 
      
         ```rust
           pub fn new() -> Self
          ```         
        
-         creates a new `SnnBuilder` 
+        创建一个新的 `SnnBuilder` 
      
-     - **add_layer()** method:
+     - **add_layer()** 
      
        ```rust
           pub fn add_layer(self) -> WeightsBuilder<N, OUTPUT_DIM, NET_INPUT_DIM> 
        ``` 
-         adds a new (empty) layer to the `SnnBuilder`
+         向 `SnnBuilder` 添加一个新的（空）层
      
-     -  **weights()** method:
+     -  **weights()**
      
         ```rust
           pub fn weights<const NUM_NEURONS: usize>(mut self, weights: [[f64; INPUT_DIM]; NUM_NEURONS])
                                            -> NeuronsBuilder<N, NUM_NEURONS, NET_INPUT_DIM>
           ```
-          adds weights from the previous layer to the current layer 
+          向当前层添加与前一层的权重
      
        - **neurons()** method:
        
          ```rust
              pub fn neurons(mut self, neurons: [N; NUM_NEURONS]) -> IntraWeightsBuilder<N, NUM_NEURONS, NET_INPUT_DIM>
          ```
-          adds neurons to the current layer 
+          向当前层添加神经元
      - **intra_weights()** method
         ```rust
          pub fn intra_weights(mut self, intra_weights: [[f64; NUM_NEURONS]; NUM_NEURONS])
                     -> LayerBuilder<N, NUM_NEURONS, NET_INPUT_DIM>
          ```
        
-         adds intra-weights to the current layer
+         向当前层添加层内权重
 
      - **build()** method:
      
@@ -197,58 +189,97 @@ The library provides the following main methods:
          pub fn build(self) -> SNN<N, { NET_INPUT_DIM }, { OUTPUT_DIM }>
          ```
        
-         builds the `SNN` from the information collected so far by the `SnnBuilder`
+         根据 `SnnBuilder` 收集的信息构建 `SNN`
 
  
-- #### `DynSnnBuilder` methods:
-   - **new()** method:
+- #### `DynSnnBuilder` :
+   - **new()** :
    
      ```rust
      pub fn new(input_dimension: usize) -> Self 
         ```
      
-     creates a new `DynSnnBuilder`
-   - **add_layer()** method:
+     创建一个新的 `DynSnnBuilder`
+   - **add_layer()** :
    
      ```rust
      pub fn add_layer(self, neurons: Vec<N>, extra_weights: Vec<Vec<f64>>, intra_weights: Vec<Vec<f64>>) -> Self
      ```
      
-     adds a new `layer` to the SNN with the given `neurons`, `weights` and `intra_weights` passed as parameters
+     使用给定的 `neurons`、`weights` 和 `intra_weights` 参数向 SNN 添加一个新 `层`
 
-   - **build()** method:
+   - **build()** :
    
      ```rust
      pub fn build(self) -> DynSNN<N>
      ```
      
-     builds the `DynSNN` from the information collected so far by the `DynSnnBuilder`
+     根据 `DynSnnBuilder` 收集的信息构建 `DynSNN`
 
  - ### Network Methods
    - #### `Snn` method:
-      - process() method:
+      - process() :
       
         ```rust
          pub fn process<const SPIKES_DURATION: usize>(&mut self, spikes: &[[u8; SPIKES_DURATION]; NET_INPUT_DIM])
                                                  -> [[u8; SPIKES_DURATION]; NET_OUTPUT_DIM]
         ```
         
-        processes the input spikes passed as parameter and returns the output spikes of the network
+        处理作为参数传递的输入脉冲，并返回网络的输出脉冲
    - #### `DynSnn` method:
-        - process() method:
+        - process() :
         
             ```rust
              pub fn process(&mut self, spikes: &Vec<Vec<u8>>)
                                                  -> Vec<Vec<u8>> 
             ```
           
-            processes the input spikes passed as parameter and returns the output spikes of the network
+            处理作为参数传递的输入脉冲，并返回网络的输出脉冲
    
 
+## 使用示例
+以下示例展示了如何使用 SnnBuilder 静态创建一个具有 2 个输入神经元和一层 3 个 LifNeuron 的 脉冲神经网络，并在每个神经元 3 个时刻的给定输入上执行它
+```rust
+use pds_snn::builders::SnnBuilder;
+use pds_snn::models::neuron::lif::LifNeuron;
 
-## Usage examples
-The following example shows how to *statically* create a `Spiking Neural Network` with 2 input neurons and  
-a single layer of 3 `LifNeuron`s using the `SnnBuilder`, and how to execute it on a given input of 3 instants per neuron.
+
+ let mut snn = SnnBuilder::new()
+        .add_layer()    /* 第一层（输入维度自动推断） */
+            .weights([
+                [0.1, 0.2],     /* 从输入层到第 1 个神经元的权重 */
+                [0.3, 0.4],     /* 从输入层到第 2 个神经元的权重 */
+                [0.5, 0.6]      /* 从输入层到第 3 个神经元的权重 */
+            ]).neurons([    
+                /* 3 个 LIF 神经元 */
+                LifNeuron::new(0.3, 0.05, 0.1, 1.0, 1.0),
+                LifNeuron::new(0.3, 0.05, 0.1, 1.0, 1.0),
+                LifNeuron::new(0.3, 0.05, 0.1, 1.0, 1.0)
+            ]).intra_weights([
+                [0.0, -0.1, -0.15],     /* 从同一层到第 1 个神经元的权重 */
+                [-0.05, 0.0, -0.1],     /* 从同一层到第 2 个神经元的权重 */
+                [-0.15, -0.1, 0.0]      /* 从同一层到第 3 个神经元的权重 */
+        ])
+        .add_layer()    /* 第二层 */
+            .weights([
+                [0.11, 0.29, 0.3],      /* 从前一层到第 1 个神经元的权重 */
+                [0.33, 0.41, 0.57]      /* 从前一层到第 2 个神经元的权重 */
+            ]).neurons([    
+                /* 2 个 LIF 神经元 */
+                LifNeuron::new(0.3, 0.05, 0.1, 1.0, 1.0),
+                LifNeuron::new(0.3, 0.05, 0.1, 1.0, 1.0)
+            ]).intra_weights([
+                [0.0, -0.25],       /* 从同一层到第 1 个神经元的权重 */
+                [-0.10, 0.0]        /* 从同一层到第 2 个神经元的权重 */
+        ]).build();     /* 创建网络 */
+    
+    /* 处理输入脉冲 */
+    let output_spikes = snn.process(&[
+        [1,0,1],    /* 第 1 个神经元输入 */
+        [0,0,1]     /* 第 2 个神经元输入 */
+    ]);       
+```
+以下示例展示了如何使用 DynSnnBuilder 动态创建一个具有 2 个输入神经元和一层 3 个 LifNeuron 的 脉冲神经网络，并在每个神经元 3 个时刻的给定输入上执行它
 
 ```rust
 use pds_snn::builders::SnnBuilder;
@@ -256,82 +287,37 @@ use pds_snn::models::neuron::lif::LifNeuron;
 
 
  let mut snn = SnnBuilder::new()
-        .add_layer()    /* first layer (input dimension automatically inferred) */
+        .add_layer()    /* 第一层（输入维度自动推断） */
             .weights([
-                [0.1, 0.2],     /* weigths from input layer to the 1st neuron */
-                [0.3, 0.4],     /* weigths from input layer to the 2nd neuron */
-                [0.5, 0.6]      /* weigths from input layer to the 3rd neuron */
+                [0.1, 0.2],     /* 从输入层到第 1 个神经元的权重 */
+                [0.3, 0.4],     /* 从输入层到第 2 个神经元的权重 */
+                [0.5, 0.6]      /* 从输入层到第 3 个神经元的权重 */
             ]).neurons([    
-                /* 3 LIF neurons */
+                /* 3 个 LIF 神经元 */
                 LifNeuron::new(0.3, 0.05, 0.1, 1.0, 1.0),
                 LifNeuron::new(0.3, 0.05, 0.1, 1.0, 1.0),
                 LifNeuron::new(0.3, 0.05, 0.1, 1.0, 1.0)
             ]).intra_weights([
-                [0.0, -0.1, -0.15],     /* weigths from the same layer to the 1st neuron */
-                [-0.05, 0.0, -0.1],     /* weigths from the same layer to the 2nd neuron */
-                [-0.15, -0.1, 0.0]      /* weigths from the same layer to the 3rd neuron */
+                [0.0, -0.1, -0.15],     /* 从同一层到第 1 个神经元的权重 */
+                [-0.05, 0.0, -0.1],     /* 从同一层到第 2 个神经元的权重 */
+                [-0.15, -0.1, 0.0]      /* 从同一层到第 3 个神经元的权重 */
         ])
-        .add_layer()    /* second layer */
+        .add_layer()    /* 第二层 */
             .weights([
-                [0.11, 0.29, 0.3],      /* weigths from previous layer to the 1st neuron */
-                [0.33, 0.41, 0.57]      /* weigths from previous layer to the 2nd neuron */
+                [0.11, 0.29, 0.3],      /* 从前一层到第 1 个神经元的权重 */
+                [0.33, 0.41, 0.57]      /* 从前一层到第 2 个神经元的权重 */
             ]).neurons([    
-                /* 2 LIF neurons */
+                /* 2 个 LIF 神经元 */
                 LifNeuron::new(0.3, 0.05, 0.1, 1.0, 1.0),
                 LifNeuron::new(0.3, 0.05, 0.1, 1.0, 1.0)
             ]).intra_weights([
-                [0.0, -0.25],       /* weigths from the same layer to the 1st neuron */
-                [-0.10, 0.0]        /* weigths from the same layer to the 2nd neuron */
-        ]).build();     /* create the network */
+                [0.0, -0.25],       /* 从同一层到第 1 个神经元的权重 */
+                [-0.10, 0.0]        /* 从同一层到第 2 个神经元的权重 */
+        ]).build();     /* 创建网络 */
     
-    /* process input spikes */
+    /* 处理输入脉冲 */
     let output_spikes = snn.process(&[
-        [1,0,1],    /* 1st neuron input */
-        [0,0,1]     /* 2ns neuron input */
+        [1,0,1],    /* 第 1 个神经元输入 */
+        [0,0,1]     /* 第 2 个神经元输入 */
     ]);    
-```
-The following example shows how to *dynamically* create a `Spiking Neural Network` with 2 input neurons and 
-a single layer of 3 `LifNeuron`s using the `DynSnnBuilder`, and how to execute it on a given input of 3 instants per neuron.
-
-```rust
-use pds_snn::builders::DynSnnBuilder;
-use pds_snn::models::neuron::lif::LifNeuron;
-
-    let mut snn = DynSnnBuilder::new(2)     /* input dimension of 2 */
-        .add_layer(     /* first layer*/
-            vec![   /* 3 LIF neurons */
-                LifNeuron::new(0.3, 0.05, 0.1, 1.0, 1.0),
-                LifNeuron::new(0.3, 0.05, 0.1, 1.0, 1.0),
-                LifNeuron::new(0.3, 0.05, 0.1, 1.0, 1.0)
-            ], 
-            vec![   /* weights */
-                vec![0.1, 0.2],     /* weigths from input layer to the 1st neuron */
-                vec![0.3, 0.4],     /* weigths from input layer to the 2nd neuron */
-                vec![0.5, 0.6]      /* weigths from input layer to the 3rd neuron */
-            ], 
-            vec![   /* intra-weights */
-                vec![0.0, -0.1, -0.15],     /* weigths from the same layer to the 1st neuron */
-                vec![-0.05, 0.0, -0.1],     /* weigths from the same layer to the 2nd neuron */
-                vec![-0.15, -0.1, 0.0]      /* weigths from the same layer to the 3rd neuron */
-            ]
-        ).add_layer(    /* second layer */
-            vec![   /* 2 LIF neurons */
-                LifNeuron::new(0.3, 0.05, 0.1, 1.0, 1.0),
-                LifNeuron::new(0.3, 0.05, 0.1, 1.0, 1.0)
-            ],
-            vec![   /* weights */
-                vec![0.11, 0.29, 0.3],      /* weigths from previous layer to the 1st neuron */
-                vec![0.33, 0.41, 0.57]      /* weigths from previous layer to the 2nd neuron */
-            ],
-            vec![   /* intra-weights */
-                vec![0.0, -0.25],       /* weigths from the same layer to the 1st neuron */
-                vec![-0.10, 0.0]        /* weigths from the same layer to the 2nd neuron */
-            ]
-        ).build();  /* create the network */
-    
-    /* process input spikes */
-    let output_spikes = snn.process(&vec![
-        vec![1,0,1],    /* 1st neuron input */
-        vec![0,0,1]     /* 2nd neuron input */
-    ]);
 ```
