@@ -76,6 +76,7 @@ fn demo_dynamic_snn() {
     println!("\n脉冲神经网络生成的输出脉冲：");
     print_instants(output_spikes[0].len());
     print_spikes(&output_spikes, "output");
+
 }
 
 fn demo_static_snn() {
