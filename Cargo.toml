@@ -1,11 +1,15 @@
 [package]
 name = "pds_snn"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
-authors = ["Mario Mastrandrea", "Giuseppe Lazzara", "Francesco Rosati"]
-description = "Library aiming to provide support for the implementation of Spiking Neural Network models"
-default-run = "verbose_demo"
+default-run = "pds_snn"  # 改为默认运行 pds_snn（或保留 verbose_demo，根据需要）
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[[bin]]
+name = "pds_snn"
+path = "src/bin/demo.rs"  # 假设 demo.rs 是 pds_snn 的入口
+
+[[bin]]
+name = "verbose_demo"
+path = "src/bin/verbose_demo.rs"  # verbose_demo 的入口
 
 [dependencies]
