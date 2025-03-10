@@ -6,7 +6,7 @@ from inputInterface import imgToSpikeTrain
 from outputInterface import computePerformance
 
 # 时间步长，以毫秒为单位
-dt = 0.1
+dt = 5.0
 
 # spikes序列的持续时间，以毫秒为单位
 trainDuration = 350
@@ -15,7 +15,7 @@ trainDuration = 350
 computationSteps = int(trainDuration / dt)
 
 # 输入像素值的归一化强度，用于调整spikes生成的频率
-inputIntensity = 2.
+inputIntensity = 400
 
 # 每隔多少张图像评估一次准确率
 updateInterval = 100

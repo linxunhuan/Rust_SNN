@@ -31,23 +31,30 @@ def imgToSpikeTrain(image, dt, trainingSteps, inputIntensity, rng):
 
 
 def poisson(image, dt, random2D, inputIntensity):
-
     ''' 
     将像素的数值通过泊松过程转换为 spikes 序列。
 
     输入参数：
-
         1) image: 包含每个像素值的 NumPy 数组，像素值以整数表示
         2) dt: 时间步长，以毫秒为单位
         3) random2D: 包含像素最小值和最大值之间随机值的二维 NumPy 数组
-        4) inputIntensity: 像素强度的当前值
+        4) inputIntensity: 像素强度的最大频率（Hz）
 
     输出：
         包含每个像素 spikes 序列的布尔型二维数组
     '''
-
     # 将 dt 从毫秒转换为秒
-    dt = dt*1e-3
+    dt = dt * 1e-3
 
-    # 创建具有泊松分布的 spikes 布尔数组
-    return ((image*inputIntensity/8.0)*dt)[:] > random2D
+    # 归一化像素值（0-255 映射到 0-1）
+    normalized_image = image / 255.0
+
+    # 计算每像素的频率（Hz），基于输入强度
+    max_frequency = inputIntensity  # 最大频率，例如 100 Hz
+    frequency = normalized_image * max_frequency
+
+    # 计算每步的脉冲概率
+    spike_prob = 1.0 - np.exp(-frequency * dt)  # 泊松过程概率公式
+
+    # 使用随机值生成脉冲
+    return spike_prob > random2D
