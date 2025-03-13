@@ -1,0 +1,15 @@
+[package]
+name = "pds_snn"
+version = "0.1.0"
+edition = "2021"
+
+
+[dependencies]
+colored = "2.0.0"
+image = "0.24"
+rand = "0.8"
+ndarray = "0.15"
+byteorder = "1.4"
+phf = { version = "0.11", features = ["macros"] }
+either = "1.9"
+ndarray-npy = "0.8"
