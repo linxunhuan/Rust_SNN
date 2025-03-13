@@ -1,29 +1,29 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader, Write};
-use std::time::Instant;
 use colored::Colorize;
 use pds_snn::builders::DynSnnBuilder;
 use pds_snn::models::neuron::lif::LifNeuron;
+use std::fs::File;
+use std::io::{BufRead, BufReader, Write};
+use std::time::Instant;
 
-use ndarray::{Array2, Array1, Axis};
+use ndarray::{Array1, Array2, Axis};
 use pds_snn::simulation::inputInterface::img_to_spike_train;
 
 use pds_snn::simulation::mnist::load_dataset;
 use rand::thread_rng;
 
 // 模拟参数（从 runSimulation.py 移植）
-const DT: f64 = 0.1;                  // 时间步长（毫秒）
-const TRAIN_DURATION: usize = 350;    // 脉冲序列持续时间（毫秒）
+const DT: f64 = 0.1; // 时间步长（毫秒）
+const TRAIN_DURATION: usize = 350; // 脉冲序列持续时间（毫秒）
 const COMPUTATION_STEPS: usize = (TRAIN_DURATION as f64 / DT) as usize; // 计算步数
-const INPUT_INTENSITY: f64 = 2.0;     // 输入像素值的归一化强度
-const UPDATE_INTERVAL: usize = 100;   // 每隔多少张图像评估一次准确率
-const N_NEURONS: [usize; 1] = [400];  // 每层神经元数量
-const N_INPUTS: usize = 784;          // 输入维度（28x28）
-const NUMBER_OF_CYCLES: usize = 301;  // 模拟的图像数量
+const INPUT_INTENSITY: f64 = 2.0; // 输入像素值的归一化强度
+const UPDATE_INTERVAL: usize = 100; // 每隔多少张图像评估一次准确率
+const N_NEURONS: [usize; 1] = [400]; // 每层神经元数量
+const N_INPUTS: usize = 784; // 输入维度（28x28）
+const NUMBER_OF_CYCLES: usize = 301; // 模拟的图像数量
 
 fn main() {
-    let n_neurons = N_NEURONS[0];     // 神经元数量
-    let n_inputs = N_INPUTS;          // 输入数量
+    let n_neurons = N_NEURONS[0]; // 神经元数量
+    let n_inputs = N_INPUTS; // 输入数量
     let n_instants = COMPUTATION_STEPS; // 计算步数
 
     // 初始化随机数生成器
@@ -36,14 +36,16 @@ fn main() {
     );
 
     // 从文件中加载神经元分配
-    let assignments: Array1<f64> = ndarray_npy::read_npy("/home/luoyin/Rust-SNN-test/src/simulation/networkParameters/assignments.npy")
+    let assignments: Array1<f64> = ndarray_npy::read_npy(
+        "/home/luoyin/Rust-SNN-test/src/simulation/networkParameters/assignments.npy",
+    )
     .expect("无法读取 assignments");
 
     // 初始化脉冲历史
     let mut counters_evolution = Array2::zeros((UPDATE_INTERVAL, n_neurons)); // 计数器演变
 
     // 输入和输出文件名
-    let input_spikes_filename = "/home/luoyin/Rust-SNN-test/src/simulation/inputSpikes.txt";    // 输入脉冲文件
+    let input_spikes_filename = "/home/luoyin/Rust-SNN-test/src/simulation/inputSpikes.txt"; // 输入脉冲文件
     let output_counters_filename = "/home/luoyin/Rust-SNN-test/src/simulation/outputCounters.txt"; // 输出计数器文件
 
     println!("{}", "开始模拟...".yellow());
@@ -81,20 +83,30 @@ fn main() {
             .build();
         let building_end = building_start.elapsed();
         println!("{}", "SNN 构建完成！".green());
-        println!("{}", format!(
-            "\n构建网络耗时: {}.{:03} 秒\n",
-            building_end.as_secs(), building_end.subsec_millis()
-        ).blue());
+        println!(
+            "{}",
+            format!(
+                "\n构建网络耗时: {}.{:03} 秒\n",
+                building_end.as_secs(),
+                building_end.subsec_millis()
+            )
+            .blue()
+        );
 
         let computing_start = Instant::now();
         let input_spikes: Vec<Vec<u8>> = read_input_spikes(n_instants, n_inputs); // 读取输入脉冲
         let output_spikes = snn.process(&input_spikes); // 处理 SNN
         let computing_end = computing_start.elapsed();
         println!("{}", "输出脉冲计算完成！".green());
-        println!("{}", format!(
-            "\n计算输出脉冲耗时: {}.{:03} 秒\n",
-            computing_end.as_secs(), computing_end.subsec_millis()
-        ).blue());
+        println!(
+            "{}",
+            format!(
+                "\n计算输出脉冲耗时: {}.{:03} 秒\n",
+                computing_end.as_secs(),
+                computing_end.subsec_millis()
+            )
+            .blue()
+        );
 
         // 写入输出脉冲文件
         write_to_output_file(output_spikes, n_neurons, n_instants);
@@ -110,15 +122,16 @@ fn main() {
         }
 
         // 更新计数器历史
-        counters_evolution.row_mut((i % UPDATE_INTERVAL) as usize)
-    .assign(&output_counters.mapv(|x| x as i32));
-
+        counters_evolution
+            .row_mut((i % UPDATE_INTERVAL) as usize)
+            .assign(&output_counters.mapv(|x| x as i32));
 
         // 预测标签
         let mut max_count = 0;
         let mut predicted_label = -1;
         for label in 0..10 {
-            let spikes_count = output_counters.iter()
+            let spikes_count = output_counters
+                .iter()
                 .enumerate()
                 .filter(|&(idx, _)| assignments[idx] == label as f64)
                 .map(|(_, &val)| val)
@@ -142,10 +155,10 @@ fn main() {
 // 构建神经元
 fn build_neurons(n_neurons: usize) -> Vec<LifNeuron> {
     let thresholds: Vec<f64> = read_thresholds(n_neurons); // 读取阈值
-    let v_rest: f64 = -65.0;  // 静息电位
+    let v_rest: f64 = -65.0; // 静息电位
     let v_reset: f64 = -60.0; // 重置电位
-    let tau: f64 = 100.0;     // 时间常数
-    let dt: f64 = 0.1;        // 时间步长
+    let tau: f64 = 100.0; // 时间常数
+    let dt: f64 = 0.1; // 时间步长
 
     let mut neurons: Vec<LifNeuron> = Vec::with_capacity(n_neurons);
     println!("{}", "正在构建神经元...".yellow());
@@ -196,7 +209,8 @@ fn read_input_spikes(n_instants: usize, n_inputs: usize) -> Vec<Vec<u8>> {
 
 // 读取外部权重
 fn read_extra_weights(n_neurons: usize, n_inputs: usize) -> Vec<Vec<f64>> {
-    let path_weights_file = "/home/luoyin/Rust-SNN-test/src/simulation/networkParameters/weightsOut.txt";
+    let path_weights_file =
+        "/home/luoyin/Rust-SNN-test/src/simulation/networkParameters/weightsOut.txt";
     let input = File::open(path_weights_file).expect("无法打开 weightsOut.txt 文件！");
     let buffered = BufReader::new(input);
     let mut extra_weights: Vec<Vec<f64>> = vec![vec![0f64; n_inputs]; n_neurons];
@@ -215,14 +229,18 @@ fn read_extra_weights(n_neurons: usize, n_inputs: usize) -> Vec<Vec<f64>> {
 
 // 读取阈值
 fn read_thresholds(n_neurons: usize) -> Vec<f64> {
-    let path_threshold_file = "/home/luoyin/Rust-SNN-test/src/simulation/networkParameters/thresholdsOut.txt";
+    let path_threshold_file =
+        "/home/luoyin/Rust-SNN-test/src/simulation/networkParameters/thresholdsOut.txt";
     let input = File::open(path_threshold_file).expect("无法打开 thresholdsOut.txt 文件！");
     let buffered = BufReader::new(input);
     let mut thresholds: Vec<f64> = vec![0f64; n_neurons];
     println!("{}", "正在从 thresholdsOut.txt 读取阈值...".yellow());
     let mut i = 0;
     for line in buffered.lines() {
-        thresholds[i] = line.unwrap().parse::<f64>().expect("无法将字符串解析为 f64！");
+        thresholds[i] = line
+            .unwrap()
+            .parse::<f64>()
+            .expect("无法将字符串解析为 f64！");
         i += 1;
     }
     println!("{}", "完成！".green());
@@ -243,7 +261,9 @@ fn write_to_output_file(output_spikes: Vec<Vec<u8>>, n_neurons: usize, n_instant
     println!("{}", "完成！".green());
     println!("{}", "正在将数据写入 outputCounters.txt 文件...".yellow());
     for i in 0..n_neurons {
-        output_file.write_all(format!("{}\n", neurons_sum[i]).as_bytes()).expect("无法写入 outputCounters.txt 文件！");
+        output_file
+            .write_all(format!("{}\n", neurons_sum[i]).as_bytes())
+            .expect("无法写入 outputCounters.txt 文件！");
     }
     println!("{}", "完成！".green());
 }

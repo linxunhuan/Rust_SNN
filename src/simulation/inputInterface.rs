@@ -1,4 +1,4 @@
-use ndarray::{Array2, Array1};
+use ndarray::{Array1, Array2};
 use rand::Rng;
 
 /// 将图像转换为脉冲序列，使用泊松方法。
@@ -21,7 +21,8 @@ pub fn img_to_spike_train(
     rng: &mut impl Rng,
 ) -> Array2<bool> {
     // 生成二维随机数组，形状为 (training_steps, image.len())，值在 [0, 1) 之间
-    let random_2d = Array2::from_shape_fn((training_steps, image.len()), |_| rng.gen_range(0.0..1.0));
+    let random_2d =
+        Array2::from_shape_fn((training_steps, image.len()), |_| rng.gen_range(0.0..1.0));
 
     // 将图像转换为脉冲序列
     poisson(image, dt, &random_2d, input_intensity)
@@ -72,7 +73,7 @@ mod tests {
     fn test_img_to_spike_train() {
         // 创建一个全零的图像数组，长度为 784（模拟 MNIST 数据）
         let image = Array::from_vec(vec![0; 784]);
-        let dt = 0.1;              // 时间步长 0.1ms
+        let dt = 0.1; // 时间步长 0.1ms
         let training_steps = 3500; // 3500 个时间步
         let input_intensity = 2.0; // 输入强度
         let mut rng = rand::thread_rng();

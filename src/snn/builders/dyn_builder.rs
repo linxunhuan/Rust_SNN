@@ -1,20 +1,20 @@
 /* * dyn_builder 子模块 * */
 
-use std::sync::{Arc, Mutex};
 use crate::neuron::Neuron;
 use crate::snn::dyn_snn::DynSNN;
 use crate::snn::layer::Layer;
+use std::sync::{Arc, Mutex};
 
 /**
     包含描述DynSNN架构的配置参数的对象
 */
 #[derive(Clone)]
 pub struct DynSnnParams<N: Neuron> {
-    pub input_dimensions: usize,            // 输入层的维度
-    pub neurons: Vec<Vec<N>>,               // 每层的神经元
-    pub extra_weights: Vec<Vec<Vec<f64>>>,  // 层之间的（正）权重
-    pub intra_weights: Vec<Vec<Vec<f64>>>,  // 同一层内的（负）权重
-    pub num_layers: usize,                  // 层的数量
+    pub input_dimensions: usize,           // 输入层的维度
+    pub neurons: Vec<Vec<N>>,              // 每层的神经元
+    pub extra_weights: Vec<Vec<Vec<f64>>>, // 层之间的（正）权重
+    pub intra_weights: Vec<Vec<Vec<f64>>>, // 同一层内的（负）权重
+    pub num_layers: usize,                 // 层的数量
 }
 
 /**
@@ -25,7 +25,7 @@ pub struct DynSnnParams<N: Neuron> {
 #[derive(Clone)]
 pub struct DynSnnBuilder<N: Neuron> {
     // 包含描述DynSNN架构的配置参数的对象
-    params: DynSnnParams<N>
+    params: DynSnnParams<N>,
 }
 
 impl<N: Neuron + Clone> DynSnnBuilder<N> {
@@ -33,12 +33,12 @@ impl<N: Neuron + Clone> DynSnnBuilder<N> {
     pub fn new(input_dimension: usize) -> Self {
         Self {
             params: DynSnnParams {
-                input_dimensions: input_dimension,  // 输入层的维度
-                neurons: vec![],                    // 每层的神经元
-                extra_weights: vec![],              // 层之间的（正）权重
-                intra_weights: vec![],              // 同一层内的（负）权重
-                num_layers: 0                       // 层的数量
-            }
+                input_dimensions: input_dimension, // 输入层的维度
+                neurons: vec![],                   // 每层的神经元
+                extra_weights: vec![],             // 层之间的（正）权重
+                intra_weights: vec![],             // 同一层内的（负）权重
+                num_layers: 0,                     // 层的数量
+            },
         }
     }
     // 获取当前配置参数的副本
@@ -52,7 +52,7 @@ impl<N: Neuron + Clone> DynSnnBuilder<N> {
         - 检查神经元的数量是否等于内部权重矩阵的列数
         - 检查内部权重的值是否都是负数，并且在[-1, 0]范围内
     */
-    fn check_intra_weights(&self, num_neurons: usize, weights: &Vec<Vec<f64>>)  {
+    fn check_intra_weights(&self, num_neurons: usize, weights: &Vec<Vec<f64>>) {
         // 检查神经元的数量是否等于内部权重矩阵的行数
         if num_neurons != weights.len() {
             panic!("神经元的数量必须等于内部权重矩阵的行数");
@@ -107,11 +107,15 @@ impl<N: Neuron + Clone> DynSnnBuilder<N> {
         }
     }
 
-
     /**
         通过指定所有请求的参数为网络添加一个新层
     */
-    pub fn add_layer(self, neurons: Vec<N>, extra_weights: Vec<Vec<f64>>, intra_weights: Vec<Vec<f64>>) -> Self {
+    pub fn add_layer(
+        self,
+        neurons: Vec<N>,
+        extra_weights: Vec<Vec<f64>>,
+        intra_weights: Vec<Vec<f64>>,
+    ) -> Self {
         // 检查内部权重
         self.check_intra_weights(neurons.len(), &intra_weights);
         // 检查额外权重
@@ -130,12 +134,17 @@ impl<N: Neuron + Clone> DynSnnBuilder<N> {
         Self { params }
     }
 
-
-/**
+    /**
         通过指定所有请求的参数为网络添加一个新层。
         - 所有神经元具有相同的参数
     */
-    pub fn add_layer_with_same_neurons(self, neuron: N, num_neurons: usize, extra_weights: Vec<Vec<f64>>, intra_weights: Vec<Vec<f64>>) -> Self {
+    pub fn add_layer_with_same_neurons(
+        self,
+        neuron: N,
+        num_neurons: usize,
+        extra_weights: Vec<Vec<f64>>,
+        intra_weights: Vec<Vec<f64>>,
+    ) -> Self {
         // 检查内部权重
         self.check_intra_weights(num_neurons, &intra_weights);
         // 检查额外权重
@@ -161,21 +170,20 @@ impl<N: Neuron + Clone> DynSnnBuilder<N> {
         Self { params }
     }
 
-
-/**
+    /**
         根据已经定义的特性创建并初始化整个动态脉冲神经网络（DynSNN）。
         - 如果网络没有层，则会引发错误
     */
     pub fn build(self) -> DynSNN<N> {
-
         // 如果层的数量为0，则引发错误
         if self.params.num_layers == 0 {
             panic!("网络必须至少有一层");
         }
 
         // 检查神经元层的数量是否与权重层的数量一致
-        if self.params.neurons.len() != self.params.extra_weights.len() ||
-           self.params.neurons.len() != self.params.intra_weights.len() {
+        if self.params.neurons.len() != self.params.extra_weights.len()
+            || self.params.neurons.len() != self.params.intra_weights.len()
+        {
             /* 这种情况不应发生 */
             panic!("错误：神经元层的数量与权重层的数量不对应");
         }

@@ -8,14 +8,14 @@ use crate::snn::neuron::Neuron;
 #[derive(Debug)]
 pub struct LifNeuron {
     /* const fields */
-    v_th:    f64,       /* threshold potential */
-    v_rest:  f64,       /* resting potential */
-    v_reset: f64,       /* reset potential */
-    tau:     f64,
-    dt:      f64,       /* time interval between two consecutive instants */
+    v_th: f64,    /* threshold potential */
+    v_rest: f64,  /* resting potential */
+    v_reset: f64, /* reset potential */
+    tau: f64,
+    dt: f64, /* time interval between two consecutive instants */
     /* mutable fields */
-    v_mem:   f64,       /* membrane potential */
-    ts:      u64,       /* last instant in which has been received at least one spike */
+    v_mem: f64, /* membrane potential */
+    ts: u64,    /* last instant in which has been received at least one spike */
 }
 
 impl LifNeuron {
@@ -48,7 +48,9 @@ impl LifNeuron {
         self.tau
     }
 
-    pub fn get_dt(&self) -> f64 { self.dt }
+    pub fn get_dt(&self) -> f64 {
+        self.dt
+    }
 
     pub fn get_v_mem(&self) -> f64 {
         self.v_mem
@@ -57,7 +59,6 @@ impl LifNeuron {
     pub fn get_ts(&self) -> u64 {
         self.ts
     }
-
 }
 
 impl Neuron for LifNeuron {
@@ -79,9 +80,9 @@ impl Neuron for LifNeuron {
         return if self.v_mem > self.v_th {
             /* reset membrane potential */
             self.v_mem = self.v_reset;
-            1   /* fire */
+            1 /* fire */
         } else {
-            0   /* not fire */
+            0 /* not fire */
         };
     }
 
@@ -97,13 +98,13 @@ impl Neuron for LifNeuron {
 impl Clone for LifNeuron {
     fn clone(&self) -> Self {
         Self {
-            v_th:    self.v_th,
-            v_rest:  self.v_rest,
+            v_th: self.v_th,
+            v_rest: self.v_rest,
             v_reset: self.v_reset,
-            tau:     self.tau,
-            dt:      self.dt,
-            v_mem:   self.v_mem,
-            ts:      self.ts
+            tau: self.tau,
+            dt: self.dt,
+            v_mem: self.v_mem,
+            ts: self.ts,
         }
     }
 }

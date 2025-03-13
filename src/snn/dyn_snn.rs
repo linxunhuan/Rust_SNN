@@ -1,9 +1,9 @@
-use std::slice::IterMut;
-use std::sync::{Arc, Mutex};
 use crate::neuron::Neuron;
 use crate::snn::layer::Layer;
 use crate::snn::processor::Processor;
 use crate::SpikeEvent;
+use std::slice::IterMut;
+use std::sync::{Arc, Mutex};
 
 /* * 动态脉冲神经网络结构 * */
 
@@ -16,7 +16,7 @@ use crate::SpikeEvent;
 #[derive(Debug, Clone)]
 pub struct DynSNN<N: Neuron + Clone + 'static> {
     // 一个包含多个层的向量，每一层都由Arc和Mutex保护，以确保线程安全
-    layers: Vec<Arc<Mutex<Layer<N>>>>
+    layers: Vec<Arc<Mutex<Layer<N>>>>,
 }
 
 impl<N: Neuron + Clone> DynSNN<N> {
@@ -45,7 +45,10 @@ impl<N: Neuron + Clone> DynSNN<N> {
     }
 
     pub fn get_layers(&self) -> Vec<Layer<N>> {
-        self.layers.iter().map(|layer| layer.lock().unwrap().clone()).collect()
+        self.layers
+            .iter()
+            .map(|layer| layer.lock().unwrap().clone())
+            .collect()
     }
 
     /**
@@ -67,27 +70,27 @@ impl<N: Neuron + Clone> DynSNN<N> {
             DynSNN::<N>::encode_spikes(input_layer_dimension, spikes, spikes_duration);
 
         // * 处理输入 *
-        let processor = Processor{};
+        let processor = Processor {};
         let output_spike_events = processor.process_events(self, input_spike_events);
 
         // * 将输出解码为数组形式 *
-        let decoded_output = DynSNN::<N>::decode_spikes(output_layer_dimension,
-                                                         output_spike_events, spikes_duration);
+        let decoded_output = DynSNN::<N>::decode_spikes(
+            output_layer_dimension,
+            output_spike_events,
+            spikes_duration,
+        );
 
         // 返回解码后的输出
         decoded_output
     }
 
-
     /**
-        这个函数检查传递到'spikes'中的每个向量是否有相同数量的脉冲。
-        如果相同，它返回脉冲的持续时间；否则，会触发一个错误。
-     */
+       这个函数检查传递到'spikes'中的每个向量是否有相同数量的脉冲。
+       如果相同，它返回脉冲的持续时间；否则，会触发一个错误。
+    */
     fn compute_spikes_duration(&self, spikes: &Vec<Vec<u8>>) -> usize {
         // 计算第一个Vec的长度（如果不存在，则为0）
-        let spikes_duration = spikes.get(0)
-                                            .unwrap_or(&Vec::new())
-                                            .len();
+        let spikes_duration = spikes.get(0).unwrap_or(&Vec::new()).len();
 
         // 遍历每个神经元的脉冲
         for neuron_spikes in spikes {
@@ -100,14 +103,17 @@ impl<N: Neuron + Clone> DynSNN<N> {
         spikes_duration
     }
 
-
-    /** 
+    /**
         这个函数将接收到的输入脉冲编码为一个Vec<SpikeEvent>以处理它们。
     */
-    fn encode_spikes(input_layer_dimension: usize, spikes: &Vec<Vec<u8>>, spikes_duration: usize) -> Vec<SpikeEvent> {
+    fn encode_spikes(
+        input_layer_dimension: usize,
+        spikes: &Vec<Vec<u8>>,
+        spikes_duration: usize,
+    ) -> Vec<SpikeEvent> {
         // 创建一个空的Vec<SpikeEvent>用于存储编码后的脉冲事件
         let mut spike_events = Vec::<SpikeEvent>::new();
-    
+
         // 检查输入脉冲的数量是否与输入层的维度一致
         if spikes.len() != input_layer_dimension {
             panic!("输入脉冲的数量与输入层的维度不一致： 'spikes'必须为每个神经元提供一个Vec");
@@ -122,7 +128,10 @@ impl<N: Neuron + Clone> DynSNN<N> {
             for in_neuron_index in 0..spikes.len() {
                 // 检查输入脉冲是否为0或1
                 if spikes[in_neuron_index][t] != 0 && spikes[in_neuron_index][t] != 1 {
-                    panic!("错误：输入脉冲在N={}处和t={}时必须为0或1", in_neuron_index, t);
+                    panic!(
+                        "错误：输入脉冲在N={}处和t={}时必须为0或1",
+                        in_neuron_index, t
+                    );
                 }
                 // 将脉冲加入到时间点t的脉冲Vec中
                 t_spikes.push(spikes[in_neuron_index][t]);
@@ -137,11 +146,14 @@ impl<N: Neuron + Clone> DynSNN<N> {
         spike_events
     }
 
-
     /**
-        这个函数解码一个含有SpikeEvent的Vec，并返回一个由0和1组成的输出脉冲矩阵
-     */
-    fn decode_spikes(output_layer_dimension: usize, spikes: Vec<SpikeEvent>, spikes_duration: usize) -> Vec<Vec<u8>> {
+       这个函数解码一个含有SpikeEvent的Vec，并返回一个由0和1组成的输出脉冲矩阵
+    */
+    fn decode_spikes(
+        output_layer_dimension: usize,
+        spikes: Vec<SpikeEvent>,
+        spikes_duration: usize,
+    ) -> Vec<Vec<u8>> {
         // 创建一个大小为output_layer_dimension x spikes_duration的二维向量raw_spikes，并初始化为0
         let mut raw_spikes = vec![vec![0; spikes_duration]; output_layer_dimension];
 
@@ -156,7 +168,6 @@ impl<N: Neuron + Clone> DynSNN<N> {
         // 返回构建好的raw_spikes矩阵
         raw_spikes
     }
-
 }
 
 impl<'a, N: Neuron + Clone + 'static> IntoIterator for &'a mut DynSNN<N> {

@@ -15,7 +15,7 @@ pub trait Neuron: Send {
     fn compute_v_mem(&mut self, t: u64, extra_weighted_sum: f64, intra_weighted_sum: f64) -> u8;
 
     /**
-        将神经元恢复到初始状态：初始化所有数据结构
-     */
+       将神经元恢复到初始状态：初始化所有数据结构
+    */
     fn initialize(&mut self);
 }

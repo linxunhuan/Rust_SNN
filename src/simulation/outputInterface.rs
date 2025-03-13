@@ -1,8 +1,8 @@
-use ndarray::{Array2, Array1, Axis};
 use ndarray::s; // Import the s macro
 use ndarray::ArrayBase; // Import ArrayBase
 use ndarray::Data; // Import Data trait
 use ndarray::Dim; // Import Dim
+use ndarray::{Array1, Array2, Axis};
 use std::fmt::Write;
 
 /// 根据脉冲计数器计算网络性能并更新准确率。
@@ -57,9 +57,8 @@ pub fn compute_performance<'a>(
                 .mapv(|x| x as f64);
 
             // 查找 spikes_count 超过 max_count 的位置 (element-wise comparison)
-            let where_max_spikes = Array1::from_shape_fn(update_interval, |i| {
-                spikes_count[i] > max_count[i]
-            });
+            let where_max_spikes =
+                Array1::from_shape_fn(update_interval, |i| spikes_count[i] > max_count[i]);
 
             // 在 spikes_count 较大时更新 classification 和 max_count
             for (i, &cond) in where_max_spikes.iter().enumerate() {
@@ -96,7 +95,7 @@ pub fn compute_performance<'a>(
 /// 该函数计算正确分类的百分比，并将其作为格式化字符串附加到准确率历史中。
 fn update_accuracy<'a>(
     classification: &'a Array1<i32>,
-    labels_sequence: &'a ArrayBase<impl Data<Elem=i32>, Dim<[usize; 1]>>, // Accept view type
+    labels_sequence: &'a ArrayBase<impl Data<Elem = i32>, Dim<[usize; 1]>>, // Accept view type
     accuracies: &'a mut Vec<String>,
 ) -> &'a mut Vec<String> {
     // 统计正确分类的个数
@@ -155,7 +154,14 @@ mod tests {
         let mut accuracies = Vec::new();
 
         // 调用 compute_performance (ignore unused result)
-        let _result = compute_performance(current_index, update_interval, &counters_evolution, &labels, &assignments, &mut accuracies);
+        let _result = compute_performance(
+            current_index,
+            update_interval,
+            &counters_evolution,
+            &labels,
+            &assignments,
+            &mut accuracies,
+        );
 
         // 验证结果 (use accuracies directly after mutable borrow ends)
         assert_eq!(accuracies.len(), 1); // 应该添加一个准确率
@@ -167,11 +173,18 @@ mod tests {
         let mut max_count = Array1::<f64>::zeros(update_interval);
         for label in 0..10 {
             let mask = assignments.mapv(|a| a == label);
-            let indices: Vec<usize> = mask.iter().enumerate().filter(|&(_, &b)| b).map(|(i, _)| i).collect();
-            let spikes_count = counters_evolution.select(Axis(1), &indices).sum_axis(Axis(1)).mapv(|x| x as f64);
-            let where_max_spikes = Array1::from_shape_fn(update_interval, |i| {
-                spikes_count[i] > max_count[i]
-            });
+            let indices: Vec<usize> = mask
+                .iter()
+                .enumerate()
+                .filter(|&(_, &b)| b)
+                .map(|(i, _)| i)
+                .collect();
+            let spikes_count = counters_evolution
+                .select(Axis(1), &indices)
+                .sum_axis(Axis(1))
+                .mapv(|x| x as f64);
+            let where_max_spikes =
+                Array1::from_shape_fn(update_interval, |i| spikes_count[i] > max_count[i]);
             for (i, &cond) in where_max_spikes.iter().enumerate() {
                 if cond {
                     classification[i] = label;
@@ -201,7 +214,11 @@ mod tests {
         let classification_partial = Array1::from_vec(vec![0, 1, 2, 3, 5]); // 最后一个错误
         let labels_sequence_partial = Array1::from_vec(vec![0, 1, 2, 3, 4]);
         let mut accuracies_partial = Vec::new();
-        let _result_partial = update_accuracy(&classification_partial, &labels_sequence_partial, &mut accuracies_partial);
+        let _result_partial = update_accuracy(
+            &classification_partial,
+            &labels_sequence_partial,
+            &mut accuracies_partial,
+        );
 
         assert_eq!(accuracies_partial.len(), 1);
         assert_eq!(accuracies_partial[0], "80.00%"); // 4/5 正确，准确率应为 80%
